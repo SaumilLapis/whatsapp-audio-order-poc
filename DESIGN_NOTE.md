@@ -1,70 +1,48 @@
-# Design Note – Audio to Structured Order
+# Design Note – Confidence-Based Routing
 
-## Architecture Overview
+## Confidence Model
 
-This solution is designed as a simple, modular pipeline that reflects how a production system would be built.
+The system assigns a confidence score to each extracted order based on
+deterministic and explainable signals.
 
-Audio input flows through a small number of clearly separated stages:
+Confidence is reduced when:
+- Known ASR ambiguities are detected in transcription
+- The product cannot be confidently identified
+- Quantity is inferred rather than explicit
 
-Audio input  
-→ Speech-to-text (Whisper)  
-→ Text normalization  
-→ Order extraction  
-→ Confidence scoring  
-→ Downstream decision
-
-Each step is independent and can be replaced without affecting the rest of the pipeline.  
-The goal is correctness and clarity, not model complexity.
+This avoids treating speech recognition output as ground truth.
 
 ---
 
-## Human-in-the-Loop Approach
+## Routing Decision
 
-Voice input is inherently ambiguous. The system is designed to assume this from the start.
+A single confidence threshold controls automation behavior.
 
-Human review is required when:
-- The confidence score falls below a defined threshold (e.g. 0.75)
-- The product cannot be confidently identified
-- The quantity is ambiguous or inferred from speech correction
+- confidence ≥ 0.75 → auto_process
+- confidence < 0.75 → needs_human_review
 
-When a human intervenes, the corrected result is treated as a learning signal.  
-Over time, this feedback can be used to improve normalization rules, extraction logic, or model prompts.
+This threshold is intentionally conservative. It favors correctness over
+automation and can be tuned based on observed error rates.
+
+---
+
+## Human Review Strategy
+
+Orders routed for review include explicit reasons explaining why confidence
+was reduced.
+
+This allows:
+- Fast human correction
+- Clear operator trust
+- Feedback collection for future improvement
 
 Automation never silently overrides uncertainty.
 
 ---
 
-## Automation Boundaries
+## Why This Approach
 
-### What Is Automated First
+The goal is not maximum automation, but safe automation.
 
-- Audio transcription
-- Basic text cleanup
-- Structured order extraction
-- Confidence calculation
-- Routing decisions (auto vs review)
-
-These steps are deterministic and reversible.
-
-### What Is Not Automated Initially
-
-- Final order confirmation
-- Pricing decisions
-- Inventory commitments
-- Exception resolution
-
-These actions remain human-controlled until accuracy and confidence are consistently proven in production.
-
----
-
-## Scaling Considerations
-
-This solution is intentionally minimal.
-
-Future improvements would include:
-- Replacing rule-based extraction with LLM-based structured parsing
-- Expanding domain vocabulary (products, units, slang)
-- Supporting multiple languages and accents
-- Using historical corrections to refine confidence scoring
-
-The current structure supports these changes without redesign.
+By making confidence and routing explicit, the system supports gradual
+automation as data quality and model performance improve.
