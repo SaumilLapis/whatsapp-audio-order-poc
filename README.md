@@ -8,6 +8,17 @@ This repository contains a minimal, runnable pipeline that:
 4. Extracts a structured order
 5. Outputs a confidence score
 
+## Confidence & Routing
+
+Each run outputs:
+- confidence score
+- routing decision
+
+If routing is `needs_human_review`, the order should not be auto-processed
+without confirmation.
+
+The threshold can be adjusted in `pipeline/confidence.py`.
+
 ## Setup
 
 ## System Dependency
@@ -23,4 +34,3 @@ ffmpeg -version
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-
