@@ -7,14 +7,10 @@ class Order(BaseModel):
     unit: Optional[str]
 
 def extract_order(text: str) -> Order:
-    """
-    Very simple rule-based extractor for PoC
-    Example input:
-    'i need 3 pallets of cement'
-    """
     words = text.split()
 
-    quantity = next((int(w) for w in words if w.isdigit()), 1)
+    quantity = next((int(w) for w in words if w.isdigit()), 0)
+
     product = "cement" if "cement" in words else "unknown"
     unit = "pallets" if "pallet" in words else None
 
